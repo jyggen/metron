@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import Avg, Count, F, Prefetch, Q, Sum
 from django.http import Http404
 from django.utils import timezone
+from django.utils.http import http_date
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -80,6 +81,24 @@ class ReadingListItemsPagination(PageNumberPagination):
     page_size = 50
 
 
+class RetrieveModelWithLastModifiedMixin(mixins.RetrieveModelMixin):
+    """Retrieve mixin that adds Last-Modified header from the object's modified field."""
+    def get_object(self):
+        if not hasattr(self, '_cached_object'):
+            self._cached_object = super().get_object()
+
+        return self._cached_object
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        obj = self.get_object()
+
+        if obj and getattr(obj, 'modified', None):
+            response['Last-Modified'] = http_date(obj.modified.timestamp())
+
+        return response
+
+
 class UserTrackingMixin:
     """Mixin to automatically track user edits in create and update operations."""
 
@@ -116,7 +135,7 @@ class ArcViewSet(
     UserTrackingMixin,
     IssueListMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -147,7 +166,7 @@ class CharacterViewSet(
     UserTrackingMixin,
     IssueListMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -185,7 +204,7 @@ class CharacterViewSet(
 class CreatorViewSet(
     UserTrackingMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -235,7 +254,7 @@ class CreditViewset(
 class ImprintViewSet(
     UserTrackingMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -277,7 +296,7 @@ class ImprintViewSet(
 class IssueViewSet(
     UserTrackingMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -334,7 +353,7 @@ class IssueViewSet(
 class PublisherViewSet(
     UserTrackingMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -396,7 +415,7 @@ class SeriesViewSet(
     UserTrackingMixin,
     IssueListMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -465,7 +484,7 @@ class TeamViewSet(
     UserTrackingMixin,
     IssueListMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -503,7 +522,7 @@ class TeamViewSet(
 class UniverseViewSet(
     UserTrackingMixin,
     mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
@@ -537,7 +556,7 @@ class UniverseViewSet(
 
 
 class ReadingListViewSet(
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
 ):
@@ -627,7 +646,7 @@ class VariantViewset(
 
 
 class CollectionViewSet(
-    mixins.RetrieveModelMixin,
+    RetrieveModelWithLastModifiedMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
 ):
