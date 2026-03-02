@@ -147,6 +147,11 @@ class ReprintSerializer(serializers.ModelSerializer):
 class IssueSerializer(serializers.ModelSerializer):
     price = PriceField(required=False, allow_null=True)
     resource_url = serializers.SerializerMethodField("get_resource_url")
+    reprints = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Issue.objects.select_related("series", "series__series_type"),
+        required=False,
+    )
 
     def get_resource_url(self, obj: Issue) -> str:
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())

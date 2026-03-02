@@ -114,7 +114,7 @@ class Issue(CommonInfo):
         return super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        match self.series.series_type.id:
+        match self.series.series_type_id:
             case 12:
                 return f"{self.series} Chapter #{self.number}"
             case _:
@@ -172,6 +172,13 @@ def generate_cover_hash(instance: Issue) -> str:
 
 def pre_save_cover_hash(sender, instance: Issue, *args, **kwargs) -> None:
     if instance.image:
+        if instance.pk:
+            with contextlib.suppress(Issue.DoesNotExist):
+                old = Issue.objects.only("image").get(pk=instance.pk)
+
+                if old.image == instance.image:
+                    return
+
         ch = generate_cover_hash(instance)
         if instance.cover_hash != ch:
             LOGGER.info(

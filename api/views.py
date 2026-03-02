@@ -315,13 +315,13 @@ class IssueViewSet(
     ImageHash. https://github.com/JohannesBuchner/imagehash
     """
 
-    queryset = Issue.objects.all()
+    queryset = Issue.objects.select_related("series", "series__series_type")
     filterset_class = IssueFilter
     parser_classes = (MultiPartParser, FormParser)
 
     def get_queryset(self):
         if self.action == "list":
-            return Issue.objects.select_related("series", "series__series_type")
+            return super().get_queryset()
         return Issue.objects.select_related(
             "series",
             "series__series_type",
@@ -479,8 +479,8 @@ class SeriesViewSet(
         serializer_class = self.get_serializer_class()
         kwargs["context"] = self.get_serializer_context()
 
-        if self.request.method in {"POST", "PUT", "PATCH"} and not self.request.data.get("imprint"):
-            series_request_data = self.request.data.copy()
+        if "data" in kwargs and self.request.method in {"POST", "PUT", "PATCH"} and not kwargs["data"].get("imprint"):
+            series_request_data = kwargs["data"].copy()
             series_request_data["imprint"] = None
             kwargs["data"] = series_request_data
         return serializer_class(*args, **kwargs)

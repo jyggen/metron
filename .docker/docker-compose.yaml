@@ -14,7 +14,7 @@ services:
       - web_static:/home/user/static
       - web_media:/home/user/media
     ports:
-      - "8000:8000"
+      - "8033:8000"
     env_file:
       - .env.docker
     depends_on:
@@ -35,8 +35,6 @@ services:
   redis:
     image: redis:7
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
 
